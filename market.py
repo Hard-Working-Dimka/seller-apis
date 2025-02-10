@@ -11,6 +11,20 @@ logger = logging.getLogger(__file__)
 
 
 def get_product_list(page, campaign_id, access_token):
+    """Получить список товаров магазина Яндекс макет.
+
+    Args:
+        campaign_id (str): Идентификатор кампании в API и магазина в кабинете.
+        page (str): Идентификатор страницы c результатами.
+        access_token (str): Токен продавца.
+
+    Returns:
+        dict: Список товаров.
+
+    Example:
+        Точный вывод можно посмотреть в документации API Яндекс маркета.
+
+    """
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
         "Content-Type": "application/json",
@@ -30,6 +44,20 @@ def get_product_list(page, campaign_id, access_token):
 
 
 def update_stocks(stocks, campaign_id, access_token):
+    """Обновить остатки.
+
+    Args:
+        campaign_id (str): Идентификатор кампании в API и магазина в кабинете.
+        stocks (list): Информация о товарах на складах.
+        access_token (str): Токен продавца.
+
+    Returns:
+        dict: Статус запроса. Ответ от API.
+
+    Example:
+        Точный вывод можно посмотреть в документации API Яндекс маркета.
+
+    """
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
         "Content-Type": "application/json",
@@ -46,6 +74,21 @@ def update_stocks(stocks, campaign_id, access_token):
 
 
 def update_price(prices, campaign_id, access_token):
+    """Обновить цены товаров.
+
+    Args:
+        campaign_id (str): Идентификатор кампании в API и магазина в кабинете.
+        prices (list): Информация о ценах товаров.
+        access_token (str): Токен продавца.
+
+
+    Returns:
+        dict: Статус запроса. Ответ от API.
+
+    Example:
+        Точный вывод можно посмотреть в документации API Яндекс маркета.
+
+    """
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
         "Content-Type": "application/json",
@@ -62,7 +105,19 @@ def update_price(prices, campaign_id, access_token):
 
 
 def get_offer_ids(campaign_id, market_token):
-    """Получить артикулы товаров Яндекс маркета"""
+    """Получить артикулы товаров магазина Яндекс маркет.
+
+    Args:
+        campaign_id (str): Идентификатор кампании в API и магазина в кабинете.
+        market_token (str): Токен продавца.
+
+    Returns:
+        list: Список с id's товаров.
+
+    Example:
+        ["136834","164834", "136534"]
+
+    """
     page = ""
     product_list = []
     while True:
@@ -78,6 +133,32 @@ def get_offer_ids(campaign_id, market_token):
 
 
 def create_stocks(watch_remnants, offer_ids, warehouse_id):
+    """Составление наличия товаров на основе имеющихся на Яндекс маркете.
+
+    Args:
+        watch_remnants (list): Остатки часов.
+        offer_ids (str): Идентификатор в системе продавца - артикул.
+        warehouse_id: ID склада.
+
+    Returns:
+        list: Наличие товара.
+
+    Example:
+        [
+            {
+                "sku": "04586870928049",
+                "warehouseId": 143210608,
+                "items": [
+                    {
+                        "count": 100,
+                        "type": "FIT",
+                        "updatedAt": "2017-11-21T00:42:42+03:00",
+                    }
+                ],
+            }
+        ]
+
+    """
     # Уберем то, что не загружено в market
     stocks = list()
     date = str(datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z")
@@ -123,6 +204,29 @@ def create_stocks(watch_remnants, offer_ids, warehouse_id):
 
 
 def create_prices(watch_remnants, offer_ids):
+    """Составление цен на товары для Яндекс маркета.
+
+    Цена соответствует цене магазина Casio.
+
+    Args:
+        watch_remnants (list): Остатки часов.
+        offer_ids (str): Идентификатор в системе продавца - артикул.
+
+    Returns:
+        list: Список цен на товары.
+
+    Example:
+        [
+            {
+                "id": "087987",
+                "price": {
+                    "value": 5990,
+                    "currencyId": "RUR",
+                },
+            },
+        ]
+
+    """
     prices = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -143,6 +247,28 @@ def create_prices(watch_remnants, offer_ids):
 
 
 async def upload_prices(watch_remnants, campaign_id, market_token):
+    """Обновление цен товаров в магазине Яндекс маркет.
+
+    Args:
+        watch_remnants (list): Остатки часов.
+        campaign_id (str): Идентификатор кампании в API и магазина в кабинете.
+        market_token (str): Токен продавца.
+
+    Returns:
+        list: Список цен на товары.
+
+    Example:
+        [
+            {
+                "id": "087987",
+                "price": {
+                    "value": 5990,
+                    "currencyId": "RUR",
+                },
+            },
+        ]
+
+    """
     offer_ids = get_offer_ids(campaign_id, market_token)
     prices = create_prices(watch_remnants, offer_ids)
     for some_prices in list(divide(prices, 500)):
@@ -151,6 +277,48 @@ async def upload_prices(watch_remnants, campaign_id, market_token):
 
 
 async def upload_stocks(watch_remnants, campaign_id, market_token, warehouse_id):
+    """Обновление наличия товаров в магазине Яндекс маркет.
+
+    Args:
+        watch_remnants (list): Остатки часов.
+        campaign_id (str): Идентификатор кампании в API и магазина в кабинете.
+        market_token (str): Токен продавца.
+        warehouse_id: ID склада.
+
+    Returns:
+        list: Наличие товара.
+        list: Товары, которых нет в наличии.
+
+    Example:
+        [
+            {
+                "sku": "04586870928049",
+                "warehouseId": 143210608,
+                "items": [
+                    {
+                        "count": 100,
+                        "type": "FIT",
+                        "updatedAt": "2017-11-21T00:42:42+03:00",
+                    }
+                ],
+            },
+        ]
+
+        [
+            {
+                "sku": "04586870928049",
+                "warehouseId": 143210608,
+                "items": [
+                    {
+                        "count": 0,
+                        "type": "FIT",
+                        "updatedAt": "2017-11-21T00:42:42+03:00",
+                    }
+                ],
+            },
+        ]
+
+    """
     offer_ids = get_offer_ids(campaign_id, market_token)
     stocks = create_stocks(watch_remnants, offer_ids, warehouse_id)
     for some_stock in list(divide(stocks, 2000)):
