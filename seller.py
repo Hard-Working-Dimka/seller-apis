@@ -59,7 +59,7 @@ def get_offer_ids(client_id, seller_token):
         seller_token (str): Токен продавца.
 
     Returns:
-        list: Список с ids товаров.
+        list: Список с id's товаров.
 
     Example:
         ["136834","164834", "136534"]
@@ -273,8 +273,6 @@ def create_prices(watch_remnants, offer_ids):
 
 def price_conversion(price: str) -> str:
     """Преобразовать цену.
-
-    Расширенное описание функции.
 
     Args:
         price (str): Стоимость товара.
